@@ -1,4 +1,3 @@
-
 #ifndef FIXED_SIZE_ARRAY_TRACKER_HPP
 #define FIXED_SIZE_ARRAY_TRACKER_HPP
 
@@ -14,15 +13,13 @@ class FixedSizeArrayTracker {
     void log(const std::string &message) const;
 
     std::optional<unsigned int> find_contiguous_space(unsigned int length);
-
-    void add_metadata(int id, unsigned int start, unsigned int length);
+    bool add_metadata(int id, unsigned int start, unsigned int length);
     void remove_metadata(int id);
     std::optional<std::pair<unsigned int, unsigned int>> get_metadata(int id) const;
 
     void compact();
 
     const std::unordered_map<int, std::pair<unsigned int, unsigned int>> &get_all_metadata() const;
-
     friend std::ostream &operator<<(std::ostream &os, const FixedSizeArrayTracker &tracker);
 
   private:
