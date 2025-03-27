@@ -12,6 +12,14 @@ void FixedSizeArrayTracker::log(const std::string &message) const {
     }
 }
 
+double FixedSizeArrayTracker::get_usage_percentage() const {
+    unsigned int used_space = 0;
+    for (const auto &[id, range] : metadata) {
+        used_space += range.second;
+    }
+    return (static_cast<double>(used_space) / size) * 100.0;
+}
+
 // returns the index to the space with the contiguous space
 std::optional<unsigned int> FixedSizeArrayTracker::find_contiguous_space(unsigned int length) {
     unsigned int last_end = 0;

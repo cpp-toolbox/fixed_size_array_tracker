@@ -11,6 +11,7 @@ class FixedSizeArrayTracker {
     FixedSizeArrayTracker(unsigned int size, bool logging_enabled = false);
 
     void log(const std::string &message) const;
+    double get_usage_percentage() const;
 
     std::optional<unsigned int> find_contiguous_space(unsigned int length);
     bool add_metadata(int id, unsigned int start, unsigned int length);
