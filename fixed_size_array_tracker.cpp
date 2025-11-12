@@ -1,16 +1,10 @@
 #include "fixed_size_array_tracker.hpp"
 #include <vector>
 #include <string>
+#include <sstream>
 
 FixedSizeArrayTracker::FixedSizeArrayTracker(unsigned int size, bool logging_enabled)
     : size(size), logging_enabled(logging_enabled) {}
-
-void FixedSizeArrayTracker::log(const std::string &message) const {
-    if (logging_enabled) {
-        std::cout << "[LOG]: " << message << "\n";
-        std::cout << *this << "\n";
-    }
-}
 
 // returns a normalized value in [0, 1]
 double FixedSizeArrayTracker::get_usage_percentage() const {
@@ -42,20 +36,22 @@ std::optional<unsigned int> FixedSizeArrayTracker::find_contiguous_space(unsigne
 }
 
 bool FixedSizeArrayTracker::add_metadata(int id, unsigned int start, unsigned int length) {
+    LogSection _(global_logger, "add_metadata", logging_enabled);
+
     if (metadata.count(id)) {
-        log("ID '" + std::to_string(id) + "' already exists. Use a unique ID.");
+        global_logger.info("ID '" + std::to_string(id) + "' already exists. Use a unique ID.");
         return false;
     }
 
     if (start + length > size) {
-        log("Error: Metadata exceeds array bounds.");
+        global_logger.info("Error: Metadata exceeds array bounds.");
         return false;
     }
 
     // TODO: could be more efficient
     for (const auto &interval : occupied_intervals) {
         if (!(start + length <= interval.first || start >= interval.second)) {
-            log("Error: Metadata collides with an existing interval.");
+            global_logger.info("Error: Metadata collides with an existing interval.");
             return false;
         }
     }
@@ -64,13 +60,14 @@ bool FixedSizeArrayTracker::add_metadata(int id, unsigned int start, unsigned in
     metadata[id] = {start, length};
     occupied_intervals.insert({start, start + length});
 
-    log("Added metadata: ID=" + std::to_string(id) + ", start=" + std::to_string(start) +
-        ", length=" + std::to_string(length));
+    global_logger.info("Added metadata: ID=" + std::to_string(id) + ", start=" + std::to_string(start) +
+                       ", length=" + std::to_string(length));
 
     return true;
 }
 
 void FixedSizeArrayTracker::remove_metadata(int id) {
+    LogSection _(global_logger, "remove_metadata", logging_enabled);
     auto it = metadata.find(id);
     if (it != metadata.end()) {
         // Remove metadata and update intervals
@@ -78,9 +75,9 @@ void FixedSizeArrayTracker::remove_metadata(int id) {
         occupied_intervals.erase({start, start + length});
         metadata.erase(it);
 
-        log("Removed metadata for ID=" + std::to_string(id));
+        global_logger.info("Removed metadata for ID=" + std::to_string(id));
     } else {
-        log("ID '" + std::to_string(id) + "' not found.");
+        global_logger.info("ID '" + std::to_string(id) + "' not found.");
     }
 }
 
@@ -93,6 +90,7 @@ std::optional<std::pair<unsigned int, unsigned int>> FixedSizeArrayTracker::get_
 }
 
 void FixedSizeArrayTracker::compact() {
+    LogSection _(global_logger, "compact", logging_enabled);
     unsigned int current_index = 0;
     std::unordered_map<int, std::pair<unsigned int, unsigned int>> new_metadata;
 
@@ -111,11 +109,52 @@ void FixedSizeArrayTracker::compact() {
         occupied_intervals.insert({start, start + length});
     }
 
-    log("Compacted metadata.");
+    global_logger.info("Compacted metadata.");
 }
 
 const std::unordered_map<int, std::pair<unsigned int, unsigned int>> &FixedSizeArrayTracker::get_all_metadata() const {
     return metadata;
+}
+
+std::string FixedSizeArrayTracker::to_string() {
+    std::ostringstream os;
+
+    os << "Metadata: {";
+    for (const auto &[id, range] : get_all_metadata()) {
+        os << id << ": (start=" << range.first << ", length=" << range.second << "), ";
+    }
+    os << "}\n";
+
+    std::string representation(size, ' ');
+    for (const auto &[id, range] : get_all_metadata()) {
+        if (range.second > 0) {
+            representation[range.first] = '0' + (id % 10); // Display only last digit of ID
+            std::fill(representation.begin() + range.first + 1, representation.begin() + range.first + range.second,
+                      '-');
+        }
+    }
+
+    os << representation << "\n";
+
+    // Index markers
+    for (unsigned int i = 0; i < size; ++i) {
+        os << (i % 10);
+    }
+    os << "\n";
+
+    // Print numeric indices below (aligned roughly)
+    for (unsigned int i = 0; i < size; ++i) {
+        if (i % 10 == 0) {
+            os << std::to_string(i);
+            // Fill spaces until next marker to keep alignment
+            size_t next = std::min<size_t>(size, i + 10);
+            for (size_t j = i + std::to_string(i).size(); j < next; ++j)
+                os << " ";
+        }
+    }
+    os << "\n";
+
+    return os.str();
 }
 
 std::ostream &operator<<(std::ostream &os, const FixedSizeArrayTracker &tracker) {
