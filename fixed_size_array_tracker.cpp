@@ -36,22 +36,22 @@ std::optional<unsigned int> FixedSizeArrayTracker::find_contiguous_space(unsigne
 }
 
 bool FixedSizeArrayTracker::add_metadata(int id, unsigned int start, unsigned int length) {
-    LogSection _(global_logger, "add_metadata", logging_enabled);
+    GlobalLogSection _("add_metadata", logging_enabled);
 
     if (metadata.count(id)) {
-        global_logger.info("ID '" + std::to_string(id) + "' already exists. Use a unique ID.");
+        global_logger->info("ID '" + std::to_string(id) + "' already exists. Use a unique ID.");
         return false;
     }
 
     if (start + length > size) {
-        global_logger.info("Error: Metadata exceeds array bounds.");
+        global_logger->info("Error: Metadata exceeds array bounds.");
         return false;
     }
 
     // TODO: could be more efficient
     for (const auto &interval : occupied_intervals) {
         if (!(start + length <= interval.first || start >= interval.second)) {
-            global_logger.info("Error: Metadata collides with an existing interval.");
+            global_logger->info("Error: Metadata collides with an existing interval.");
             return false;
         }
     }
@@ -60,14 +60,14 @@ bool FixedSizeArrayTracker::add_metadata(int id, unsigned int start, unsigned in
     metadata[id] = {start, length};
     occupied_intervals.insert({start, start + length});
 
-    global_logger.info("Added metadata: ID=" + std::to_string(id) + ", start=" + std::to_string(start) +
-                       ", length=" + std::to_string(length));
+    global_logger->info("Added metadata: ID=" + std::to_string(id) + ", start=" + std::to_string(start) +
+                        ", length=" + std::to_string(length));
 
     return true;
 }
 
 void FixedSizeArrayTracker::remove_metadata(int id) {
-    LogSection _(global_logger, "remove_metadata", logging_enabled);
+    GlobalLogSection _("remove_metadata", logging_enabled);
     auto it = metadata.find(id);
     if (it != metadata.end()) {
         // Remove metadata and update intervals
@@ -75,9 +75,9 @@ void FixedSizeArrayTracker::remove_metadata(int id) {
         occupied_intervals.erase({start, start + length});
         metadata.erase(it);
 
-        global_logger.info("Removed metadata for ID=" + std::to_string(id));
+        global_logger->info("Removed metadata for ID=" + std::to_string(id));
     } else {
-        global_logger.info("ID '" + std::to_string(id) + "' not found.");
+        global_logger->info("ID '" + std::to_string(id) + "' not found.");
     }
 }
 
@@ -90,7 +90,7 @@ std::optional<std::pair<unsigned int, unsigned int>> FixedSizeArrayTracker::get_
 }
 
 void FixedSizeArrayTracker::compact() {
-    LogSection _(global_logger, "compact", logging_enabled);
+    GlobalLogSection _("compact", logging_enabled);
     unsigned int current_index = 0;
     std::unordered_map<int, std::pair<unsigned int, unsigned int>> new_metadata;
 
@@ -109,7 +109,7 @@ void FixedSizeArrayTracker::compact() {
         occupied_intervals.insert({start, start + length});
     }
 
-    global_logger.info("Compacted metadata.");
+    global_logger->info("Compacted metadata.");
 }
 
 const std::unordered_map<int, std::pair<unsigned int, unsigned int>> &FixedSizeArrayTracker::get_all_metadata() const {
