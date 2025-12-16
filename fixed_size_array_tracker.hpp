@@ -23,7 +23,7 @@ class FixedSizeArrayTracker {
      * @param size The total size of the array to track.
      * @param logging_enabled If true, enables debug logging to standard output.
      */
-    FixedSizeArrayTracker(unsigned int size, bool logging_enabled = false);
+    FixedSizeArrayTracker(unsigned int size, LogSection::LogMode log_mode = LogSection::LogMode::disable);
 
     /**
      * @brief Logs a message to the console if logging is enabled.
@@ -95,16 +95,15 @@ class FixedSizeArrayTracker {
     friend std::ostream &operator<<(std::ostream &os, const FixedSizeArrayTracker &tracker);
 
   private:
-    /// The total size of the tracked array.
+    /// the total size of the tracked array.
     unsigned int size;
 
-    /// Whether debug logging is enabled.
-    bool logging_enabled;
+    LogSection::LogMode log_mode = LogSection::LogMode::disable;
 
-    /// Maps metadata IDs to their associated regions (start index and length).
+    /// maps metadata ids to their associated regions (start index and length).
     std::unordered_map<int, std::pair<unsigned int, unsigned int>> metadata;
 
-    /// Stores occupied regions as sorted intervals (start, end).
+    /// stores occupied regions as sorted intervals (start, end).
     std::set<std::pair<unsigned int, unsigned int>> occupied_intervals;
 };
 

@@ -3,8 +3,8 @@
 #include <string>
 #include <sstream>
 
-FixedSizeArrayTracker::FixedSizeArrayTracker(unsigned int size, bool logging_enabled)
-    : size(size), logging_enabled(logging_enabled) {}
+FixedSizeArrayTracker::FixedSizeArrayTracker(unsigned int size, LogSection::LogMode log_mode)
+    : size(size), log_mode(log_mode) {}
 
 // returns a normalized value in [0, 1]
 double FixedSizeArrayTracker::get_usage_percentage() const {
@@ -36,7 +36,7 @@ std::optional<unsigned int> FixedSizeArrayTracker::find_contiguous_space(unsigne
 }
 
 bool FixedSizeArrayTracker::add_metadata(int id, unsigned int start, unsigned int length) {
-    GlobalLogSection _("add_metadata", logging_enabled);
+    GlobalLogSection _("add_metadata", log_mode);
 
     if (metadata.count(id)) {
         global_logger->info("ID '" + std::to_string(id) + "' already exists. Use a unique ID.");
@@ -67,7 +67,7 @@ bool FixedSizeArrayTracker::add_metadata(int id, unsigned int start, unsigned in
 }
 
 void FixedSizeArrayTracker::remove_metadata(int id) {
-    GlobalLogSection _("remove_metadata", logging_enabled);
+    GlobalLogSection _("remove_metadata", log_mode);
     auto it = metadata.find(id);
     if (it != metadata.end()) {
         // Remove metadata and update intervals
@@ -90,7 +90,7 @@ std::optional<std::pair<unsigned int, unsigned int>> FixedSizeArrayTracker::get_
 }
 
 void FixedSizeArrayTracker::compact() {
-    GlobalLogSection _("compact", logging_enabled);
+    GlobalLogSection _("compact", log_mode);
     unsigned int current_index = 0;
     std::unordered_map<int, std::pair<unsigned int, unsigned int>> new_metadata;
 
